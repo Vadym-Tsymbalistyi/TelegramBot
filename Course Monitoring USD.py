@@ -12,6 +12,9 @@ bot = Bot(token="7009202598:AAEM6Sdq0QKP1eRWKVz46q7BWVzrNJk7wRA")
 
 dp = Dispatcher()
 
+DB = 'exchange.db'
+
+
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):

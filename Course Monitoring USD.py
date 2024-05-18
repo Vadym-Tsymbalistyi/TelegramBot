@@ -24,10 +24,31 @@ def parse_exchange():
     print(exchange_rate)
     return exchange_rate
 
+
 @dp.message(Command('get_exchange_rate'))
 async def get_exchange_rate(message: Message):
     exchange_rate = parse_exchange()
     await message.reply(f"Current dollar to hryvnia exchange rate: {exchange_rate}")
+
+
+def save_exchange_rate(exchange_rate):
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+    cursor.execute(
+        '''CREATE TABLE IF NOT EXISTS exchange_rate 
+        (id int auto_increment PRIMARY KEY,
+        time DATETIME DEFAULT current_time,
+        exchange_rate FLOAT)  ''')
+    cursor.execute('''INSERT INTO exchange_rate (exchange_rate) VALUES(?)''',(exchange_rate,))
+    conn.commit()
+    last_id = cursor.lastrowid
+    conn.close()
+    return last_id
+
+
+exchange_rate = 24.4
+last_id = save_exchange_rate(exchange_rate)
+print(f'Save id {last_id}')
 
 
 @dp.message(CommandStart())

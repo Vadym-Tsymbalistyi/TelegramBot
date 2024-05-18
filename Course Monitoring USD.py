@@ -15,6 +15,20 @@ dp = Dispatcher()
 DB = 'exchange.db'
 
 
+def parse_exchange():
+    url = "https://www.google.com/finance/quote/USD-UAH"
+    response = requests.get(url)
+    bs = BeautifulSoup(response.text, "html.parser")
+    exchange_rate_html = bs.find('div', class_="YMlKec fxKbKc")
+    exchange_rate = exchange_rate_html.text.strip()
+    print(exchange_rate)
+    return exchange_rate
+
+@dp.message(Command('get_exchange_rate'))
+async def get_exchange_rate(message: Message):
+    exchange_rate = parse_exchange()
+    await message.reply(f"Current dollar to hryvnia exchange rate: {exchange_rate}")
+
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):

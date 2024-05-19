@@ -1,4 +1,6 @@
 import asyncio
+import os
+
 import requests
 import sqlite3
 import pandas as pd
@@ -25,17 +27,17 @@ def parse_exchange():
     return exchange_rate
 
 
-
-
 async def send_exchange_rate(chat_id):
     exchange_rate = parse_exchange()
     save_exchange_rate(exchange_rate)
     data = {'Timestamp': [datetime.now().strftime("%Y-%m-%d %H:%M:%S")], 'Exchange Rate': [exchange_rate]}
     df = pd.DataFrame(data)
+
     filename = f'exchange_rate_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.xlsx'
     df.to_excel(filename, index=False)
     document = FSInputFile(filename)
     await bot.send_document(chat_id, document)
+    os.remove(filename)
 
 
 @dp.message(Command('get_exchange_rate'))
@@ -44,13 +46,20 @@ async def get_exchange_rate(message: types.Message):
     await send_exchange_rate(chat_id)
 
 
+async def parse_save_period():
+    while True:
+        exchange_rate = parse_exchange()
+        save_exchange_rate(exchange_rate)
+        await asyncio.sleep(3600)
+
+
 def save_exchange_rate(exchange_rate):
     conn = sqlite3.connect(DB)
     cursor = conn.cursor()
     cursor.execute(
         '''CREATE TABLE IF NOT EXISTS exchange_rate 
         (id  INTEGER PRIMARY KEY AUTOINCREMENT,
-        time DATETIME DEFAULT current_time,
+        time DATETIME DEFAULT CURRENT_TIME,
         exchange_rate FLOAT)  ''')
     cursor.execute('''INSERT INTO exchange_rate (exchange_rate) VALUES(?)''', (exchange_rate,))
     conn.commit()
@@ -59,27 +68,13 @@ def save_exchange_rate(exchange_rate):
     return last_id
 
 
-# exchange_rate = 24.4
-# last_id = save_exchange_rate(exchange_rate)
-# print(f'Save id {last_id}')
-
-
-# @dp.message(CommandStart())
-# async def cmd_start(message: Message):
-#    await message.answer('My first bot started')
-#
-#
-# @dp.message(Command('help'))
-# async def cmd_help(message: Message):
-#    await message.answer('You have clicked on the help')
-#
-#
-# @dp.message(F.text == 'I am good')
-# async def good(message: Message):
-#    await message.answer('SUPER')
+exchange_rate = 24.4
+last_id = save_exchange_rate(exchange_rate)
+print(f'Save id {last_id}')
 
 
 async def main() -> None:
+    asyncio.create_task(parse_save_period())
     await dp.start_polling(bot)
 
 

@@ -50,7 +50,7 @@ async def parse_save_period():
     while True:
         exchange_rate = parse_exchange()
         save_exchange_rate(exchange_rate)
-        await asyncio.sleep(3600)
+        await asyncio.sleep(30)
 
 
 def save_exchange_rate(exchange_rate):
